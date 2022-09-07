@@ -9,6 +9,8 @@ import appRouter from './routers/appRouter'
 
 const app = express()
 
+app.use(express.static('client/build'))
+
 app.use(express.json())
 app.use(helmet())
 app.use(cors())
