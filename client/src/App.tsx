@@ -1,12 +1,15 @@
+import axios from 'axios'
 import { Formik } from 'formik'
+import { useState } from 'react'
 import Button from 'react-bootstrap/Button'
 import Container from 'react-bootstrap/Container'
 import Form from 'react-bootstrap/Form'
 import { object, string } from 'yup'
 
-import './App.css'
-
 function App() {
+  const [link, setLink] = useState('')
+  const api = process.env.REACT_APP_API as string
+
   const initialValues = {
     long: '',
     short: ''
@@ -22,12 +25,19 @@ function App() {
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
-        onSubmit={(values) => {
-          //TODO: Send data to server
-          console.log(values)
+        onSubmit={async (values) => {
+          const response = await axios.post(api, {
+            long_url: values.long,
+            short_url: values.short
+          })
+
+          if (response.status === 201) {
+            console.log(response.data)
+            setLink(api + response.data.short)
+          }
         }}
       >
-        {({ handleSubmit, handleChange, values, touched, isValid, errors }) => (
+        {({ handleSubmit, handleChange, values, touched, errors }) => (
           <Form noValidate onSubmit={handleSubmit}>
             <Form.Group className="mb-3" controlId="long">
               <Form.Label>Long link</Form.Label>
@@ -70,6 +80,7 @@ function App() {
           </Form>
         )}
       </Formik>
+      {<a href={link}>{link}</a>}
     </Container>
   )
 }
