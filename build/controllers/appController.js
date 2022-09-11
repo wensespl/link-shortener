@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getLongUrl = exports.createShortUrl = void 0;
 const Link_1 = __importDefault(require("../models/Link"));
+const redisClient_1 = __importDefault(require("../redisClient"));
 const createShortUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { long_url, short_url } = req.body;
     let link = yield Link_1.default.findOne({ short: short_url });
@@ -26,9 +27,19 @@ const createShortUrl = (req, res) => __awaiter(void 0, void 0, void 0, function*
 exports.createShortUrl = createShortUrl;
 const getLongUrl = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { short_url } = req.params;
-    let link = yield Link_1.default.findOne({ short: short_url });
-    if (!link)
-        throw new Error('URL not found');
+    let data = yield redisClient_1.default.get(`link:${short_url}`);
+    let link;
+    if (!data) {
+        link = yield Link_1.default.findOne({ short: short_url });
+        if (!link)
+            throw new Error('URL not found');
+        yield redisClient_1.default.set(`link:${short_url}`, JSON.stringify(link));
+        console.log('Not cache');
+    }
+    else {
+        link = JSON.parse(data);
+        console.log('cache');
+    }
     res.redirect(302, link.long);
 });
 exports.getLongUrl = getLongUrl;
